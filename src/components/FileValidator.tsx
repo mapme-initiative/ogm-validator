@@ -199,6 +199,10 @@ export default function FileValidator(): React.ReactElement {
 
 		//console.log(errors)
 		//REFACTOR: slice weil der letzte Fehler in den Tests immer die Else Reference Fehler Ausgabe des Master Schema ist  
+		if (!errors) {
+			return [];
+		}
+
 		return errors.slice(0).map((error: any) => {
 			const path = error.instancePath ? ` at "${error.instancePath}"` : "";
 			const message = error.message ? `: ${error.message}` : "";
