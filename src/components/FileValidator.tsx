@@ -198,7 +198,6 @@ export default function FileValidator(): React.ReactElement {
 	const formatAjvErrorsCSVExcel = (errors: any, rowNumber: number) => {
 
 		//console.log(errors)
-		//REFACTOR: slice weil der letzte Fehler in den Tests immer die Else Reference Fehler Ausgabe des Master Schema ist  
 		if (!errors) {
 			return [];
 		}
