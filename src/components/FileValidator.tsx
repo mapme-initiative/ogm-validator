@@ -266,7 +266,7 @@ export default function FileValidator(): React.ReactElement {
 			{/* ____________________ Example ____________________ */}
 
 			<h4>File Format</h4>
-			<p><a href={"ogm-validator/Project_Location_Data_Template_V02.xlsx"}>Example file</a></p>
+			<p><a href={"Project_Location_Data_Template_V02.xlsx"}>Example file</a></p>
 
 		</div>
 	</>
