@@ -3,4 +3,4 @@ This is a simple website which validates if an excel/geodata-file is valid accor
 
 In case you're more interested in the Open Geodata Model specification you'll find it [here](https://github.com/openkfw/open-geodata-model)
 
-The Validator - Tool itself can be accessed [here]([url](https://mapme-initiative.github.io/ogm-validator/))
+The Validator - Tool itself can be accessed [here](https://mapme-initiative.github.io/ogm-validator/)
