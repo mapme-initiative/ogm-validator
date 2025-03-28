@@ -4,6 +4,7 @@ import L from "leaflet";
 import 'leaflet/dist/leaflet.css';
 import 'leaflet.fullscreen/Control.FullScreen.css';
 import 'leaflet.fullscreen';
+import './scss/MapComponent.scss';
 
 
 interface GeoJSONFeature {
@@ -72,10 +73,39 @@ const MapComponent: React.FC<MapComponentProps> = ({ geoJsonData }) => {
 
   const onEachFeature = (feature: any, layer: L.Layer) => {
     if (feature.properties) {
-      const timeLapseLink = feature.timelapse_link ? `<br><br><a href="${feature.timelapse_link}" target="_blank">Timelapse Link</a>` : ""
-      layer.bindPopup(
-        `<b>${feature.properties.uniqueId}</b><br>${feature.properties.kfwProjectNoINPRO}<br><br>${feature.properties.locationName}<br><br>${feature.properties.activityDescriptionGeneral}<br>Type: ${feature.properties.sector_location.location_type}${timeLapseLink}`
-      );
+      const props = feature.properties;
+      const timeLapseLink = feature.timelapse_link ? 
+        `<a href="${feature.timelapse_link}" target="_blank">Timelapse Link</a>` : "";
+      
+      // Create a formatted HTML string with all the requested fields in the exact order from the table
+      const popupContent = `
+        <div class="map-popup">
+          <h3>${props.locationName || 'N/A'}</h3>
+          <div class="popup-content">
+            <p><span class="popup-label">Unique ID:</span> <span class="popup-value">${props.uniqueId || 'N/A'}</span></p>
+            <p><span class="popup-label">Inpro Nr.:</span> <span class="popup-value">${props.kfwProjectNoINPRO || 'N/A'}</span></p>
+            <p><span class="popup-label">Project Acronym:</span> <span class="popup-value">${props.projectAcronym || 'N/A'}</span></p>
+            <p><span class="popup-label">Data Owner:</span> <span class="popup-value">${props.dataOwner || 'N/A'}</span></p>
+            <p><span class="popup-label">Publishing Restrictions:</span> <span class="popup-value">${props.publishingRestrictions || 'N/A'}</span></p>
+            <p><span class="popup-label">Date of Data Collection:</span> <span class="popup-value">${props.dateOfDataCollection || 'N/A'}</span></p>
+            <p><span class="popup-label">Location Identifier:</span> <span class="popup-value">${props.projectSpecificLocationIdentifier || 'N/A'}</span></p>
+            <p><span class="popup-label">Location name:</span> <span class="popup-value">${props.locationName || 'N/A'}</span></p>
+            <p><span class="popup-label">Activity Status:</span> <span class="popup-value">${props.locationActivityStatus || 'N/A'}</span></p>
+            <p><span class="popup-label">Start Date:</span> <span class="popup-value">${props.plannedOrActualStartDate || 'N/A'}</span></p>
+            <p><span class="popup-label">End Date:</span> <span class="popup-value">${props.plannedOrActualEndDate || 'N/A'}</span></p>
+            <p><span class="popup-label">Activity Description:</span> <span class="popup-value">${props.activityDescriptionGeneral || 'N/A'}</span></p>
+            <p><span class="popup-label">Activity Details:</span> <span class="popup-value">${props.additionalActivityDescription || 'N/A'}</span></p>
+            <p><span class="popup-label">Location Type:</span> <span class="popup-value">${props.sector_location?.location_type || 'N/A'}</span></p>
+            <p><span class="popup-label">DAC5 Sector:</span> <span class="popup-value">${props.dac5PurposeCode || 'N/A'}</span></p>
+            <p><span class="popup-label">Geographic Exactness:</span> <span class="popup-value">${props.geographicExactness || 'N/A'}</span></p>
+            <p><span class="popup-label">Related Community or Village:</span> <span class="popup-value">${props.relatedCommunityVillageNeighborhood || 'N/A'}</span></p>
+            <p><span class="popup-label">Scheme Version:</span> <span class="popup-value">${props.schemeVersion || 'N/A'}</span></p>
+            ${timeLapseLink ? `<div>${timeLapseLink}</div>` : ''}
+          </div>
+        </div>
+      `;
+      
+      layer.bindPopup(popupContent);
     }
   };
 
@@ -143,8 +173,8 @@ const mapContainerStyle: React.CSSProperties = {
   position: "relative",
   display: "flex",
   alignItems: "left",
-  width: "100%", // Full width or set a specific width, e.g., "70%"
-  maxWidth: "1280px", // Optional: limit the max width of the map
-  aspectRatio: "16 / 9", // Maintain the 16:9 ratio
+  width: "100%", // Full width to match text description
+  maxWidth: "100%", // Remove previous constraint of 1280px to use full width
+  aspectRatio: "16 / 13.5", // Adjusted from 16/9 to make it 50% taller
   margin: "20px 0",
 };
