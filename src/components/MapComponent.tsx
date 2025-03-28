@@ -1,5 +1,5 @@
 import React from "react";
-import { MapContainer, TileLayer, GeoJSON, LayersControl, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, GeoJSON, LayersControl, useMap, ZoomControl } from "react-leaflet";
 import L from "leaflet";
 import 'leaflet/dist/leaflet.css';
 import 'leaflet.fullscreen/Control.FullScreen.css';
@@ -33,7 +33,7 @@ const FullscreenControl: React.FC = () => {
   const map = useMap();
   // Add fullscreen control only once
   if (!controlAdded) {
-    const fullscreenControl = L.control.fullscreen({ position: "topright" });
+    const fullscreenControl = L.control.fullscreen({ position: "topleft" });
     fullscreenControl.addTo(map);
     controlAdded = true; // Mark as added
   }
@@ -114,12 +114,16 @@ const MapComponent: React.FC<MapComponentProps> = ({ geoJsonData }) => {
       center={[20, 30]} // Default center of the map
       zoom={2} // Default zoom level
       style={mapContainerStyle}
+      zoomControl={false} // Disable default zoom control, we'll add it manually
     >
+      {/* Add Zoom Control (Top Left) */}
+      <ZoomControl position="topleft" />
+      
       {/* Add Fullscreen Control */}
       <FullscreenControl />
 
       {/* Base Layers */}
-      <LayersControl position="topright">
+      <LayersControl position="topleft">
         <LayersControl.BaseLayer name="GoogleStreets">
           <TileLayer
             url="http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
