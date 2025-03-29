@@ -12,12 +12,18 @@
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mui/material": "^6.4.4",
+    "@mui/styled-engine-sc": "^6.4.3",
+    "@placemarkio/tokml": "^0.3.4",
     "@types/file-saver": "^2.0.7",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-leaflet": "^4.2.1"
+    "react-leaflet": "^4.2.1",
+    "styled-components": "^6.1.15"
   },
   "devDependencies": {
     "@types/leaflet": "^1.9.14",
