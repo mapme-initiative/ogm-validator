@@ -92,6 +92,11 @@ export default function FileValidator(): React.ReactElement {
 							// Format validation errors
 							const formattedErrors = (validateProject.errors || []).map((error) => {
 								console.log(error);
+								// Add a special case for geometry type errors which are often caused by missing coordinates
+								if (error.instancePath === "/geometry/type" && error.message?.includes("must be equal to one of the allowed values")) {
+									return `Error: Invalid or missing coordinates (latitude/longitude values)`;
+								}
+								
 								const path = error.instancePath ? ` at "${error.instancePath}"` : "";
 								const message = error.message ? `: ${error.message}` : "";
 								return `Error${path}${message}`;
@@ -203,6 +208,11 @@ export default function FileValidator(): React.ReactElement {
 		}
 
 		return errors.slice(0).map((error: any) => {
+			// Add a special case for geometry type errors which are often caused by missing coordinates
+			if (error.instancePath === "/geometry/type" && error.message?.includes("must be equal to one of the allowed values")) {
+				return `Row ${rowNumber}: Invalid or missing coordinates (latitude/longitude values)`;
+			}
+			
 			const path = error.instancePath ? ` at "${error.instancePath}"` : "";
 			const message = error.message ? `: ${error.message}` : "";
 			return `Row ${rowNumber}${path}${message}`;
