@@ -100,7 +100,8 @@ export default function FileValidator(): React.ReactElement {
 									error.instancePath === "/geometry/type" ||
 									(error.instancePath === "/geometry" && 
 									(error.message?.includes("required property") || 
-									error.message?.includes("must match exactly one schema")))
+									error.message?.includes("must match exactly one schema") ||
+									error.message?.includes("must be null")))
 								))
 							);
 							
@@ -108,7 +109,7 @@ export default function FileValidator(): React.ReactElement {
 							
 							// If coordinate errors exist, add a single clear message
 							if (hasCoordinateErrors) {
-								formattedErrors.push(`Error: Invalid or missing coordinates (latitude/longitude values)`);
+								formattedErrors.push(`Error: Invalid or missing coordinates (latitude/longitude values). The project location is not printed on the map.`);
 							}
 							
 							// Add all non-coordinate related errors
@@ -119,7 +120,8 @@ export default function FileValidator(): React.ReactElement {
 									error.instancePath === "/geometry/type" ||
 									(error.instancePath === "/geometry" && 
 									(error.message?.includes("required property") || 
-									error.message?.includes("must match exactly one schema")))
+									error.message?.includes("must match exactly one schema") ||
+									error.message?.includes("must be null")))
 								)) {
 									return; // Skip this error
 								}
@@ -242,7 +244,8 @@ export default function FileValidator(): React.ReactElement {
 				error.instancePath === "/geometry/type" ||
 				(error.instancePath === "/geometry" && 
 				 (error.message?.includes("required property") || 
-				  error.message?.includes("must match exactly one schema")))
+				  error.message?.includes("must match exactly one schema") ||
+				  error.message?.includes("must be null")))
 			))
 		);
 
@@ -251,7 +254,7 @@ export default function FileValidator(): React.ReactElement {
 
 		// If coordinate errors exist, add a single clear message
 		if (hasCoordinateErrors) {
-			resultErrors.push(`Row ${rowNumber}: Invalid or missing coordinates (latitude/longitude values)`);
+			resultErrors.push(`Row ${rowNumber}: Invalid or missing coordinates (latitude/longitude values). The project location is not printed on the map.`);
 		}
 
 		// Add all non-coordinate related errors
@@ -262,7 +265,8 @@ export default function FileValidator(): React.ReactElement {
 				error.instancePath === "/geometry/type" ||
 				(error.instancePath === "/geometry" && 
 				 (error.message?.includes("required property") || 
-				  error.message?.includes("must match exactly one schema")))
+				  error.message?.includes("must match exactly one schema") ||
+				  error.message?.includes("must be null")))
 			)) {
 				return; // Skip this error
 			}
