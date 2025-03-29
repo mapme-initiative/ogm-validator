@@ -90,16 +90,44 @@ export default function FileValidator(): React.ReactElement {
 							setGeoJsonDataWrap({ type: "FeatureCollection", features: [geoJsonData] }); // Wrap in FeatureCollection
 						} else {
 							// Format validation errors
-							const formattedErrors = (validateProject.errors || []).map((error) => {
-								console.log(error);
-								// Add a special case for geometry type errors which are often caused by missing coordinates
-								if (error.instancePath === "/geometry/type" && error.message?.includes("must be equal to one of the allowed values")) {
-									return `Error: Invalid or missing coordinates (latitude/longitude values)`;
+							const errors = validateProject.errors || [];
+							console.log(errors);
+							
+							// Check if there are any coordinate-related errors
+							const hasCoordinateErrors = errors.some(error => 
+								(error.instancePath && (
+									error.instancePath.startsWith("/geometry/coordinates") || 
+									error.instancePath === "/geometry/type" ||
+									(error.instancePath === "/geometry" && 
+									(error.message?.includes("required property") || 
+									error.message?.includes("must match exactly one schema")))
+								))
+							);
+							
+							const formattedErrors = [];
+							
+							// If coordinate errors exist, add a single clear message
+							if (hasCoordinateErrors) {
+								formattedErrors.push(`Error: Invalid or missing coordinates (latitude/longitude values)`);
+							}
+							
+							// Add all non-coordinate related errors
+							errors.forEach(error => {
+								// Skip coordinate-related errors
+								if (error.instancePath && (
+									error.instancePath.startsWith("/geometry/coordinates") || 
+									error.instancePath === "/geometry/type" ||
+									(error.instancePath === "/geometry" && 
+									(error.message?.includes("required property") || 
+									error.message?.includes("must match exactly one schema")))
+								)) {
+									return; // Skip this error
 								}
 								
+								// Format and add other errors
 								const path = error.instancePath ? ` at "${error.instancePath}"` : "";
 								const message = error.message ? `: ${error.message}` : "";
-								return `Error${path}${message}`;
+								formattedErrors.push(`Error${path}${message}`);
 							});
 							setValidationResult(`GeoJSON Feature Validation Errors:\n${formattedErrors.join("\n")}`);
 						}
@@ -207,17 +235,45 @@ export default function FileValidator(): React.ReactElement {
 			return [];
 		}
 
-		return errors.slice(0).map((error: any) => {
-			// Add a special case for geometry type errors which are often caused by missing coordinates
-			if (error.instancePath === "/geometry/type" && error.message?.includes("must be equal to one of the allowed values")) {
-				return `Row ${rowNumber}: Invalid or missing coordinates (latitude/longitude values)`;
+		// Check if there are any coordinate-related errors
+		const hasCoordinateErrors = errors.some(error => 
+			(error.instancePath && (
+				error.instancePath.startsWith("/geometry/coordinates") || 
+				error.instancePath === "/geometry/type" ||
+				(error.instancePath === "/geometry" && 
+				 (error.message?.includes("required property") || 
+				  error.message?.includes("must match exactly one schema")))
+			))
+		);
+
+		// Initialize the result array
+		const resultErrors = [];
+
+		// If coordinate errors exist, add a single clear message
+		if (hasCoordinateErrors) {
+			resultErrors.push(`Row ${rowNumber}: Invalid or missing coordinates (latitude/longitude values)`);
+		}
+
+		// Add all non-coordinate related errors
+		errors.forEach(error => {
+			// Skip coordinate-related errors since we've already added a consolidated message for them
+			if (error.instancePath && (
+				error.instancePath.startsWith("/geometry/coordinates") || 
+				error.instancePath === "/geometry/type" ||
+				(error.instancePath === "/geometry" && 
+				 (error.message?.includes("required property") || 
+				  error.message?.includes("must match exactly one schema")))
+			)) {
+				return; // Skip this error
 			}
 			
+			// Format and add other errors
 			const path = error.instancePath ? ` at "${error.instancePath}"` : "";
 			const message = error.message ? `: ${error.message}` : "";
-			return `Row ${rowNumber}${path}${message}`;
+			resultErrors.push(`Row ${rowNumber}${path}${message}`);
 		});
 
+		return resultErrors;
 	};
 
 	const downloadProcessed = () => {
