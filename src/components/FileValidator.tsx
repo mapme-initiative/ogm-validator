@@ -417,7 +417,7 @@ export default function FileValidator(): React.ReactElement {
 				<li><p><a href={"/ogm-validator/Project_Location_Data_Template_V02.xlsx"}>working example</a></p></li>
 				<li><p><a href={"/ogm-validator/sheet_not_found.xlsx"}>no fill-me sheet</a></p></li>
 				<li><p><a href={"/ogm-validator/invalid_data.xlsx"}>invalid_data</a></p></li>
-				<li><p><a href={"/ogm-validator/missing_lat_lon.xlsx"}>invalid_data</a></p></li>
+				<li><p><a href={"/ogm-validator/missing_lat_lon.xlsx"}>missing_lat_lon</a></p></li>
 			</ul>
 
 		</div>
