@@ -40,46 +40,11 @@ function handleJsonFiles(areFormatsLoaded: boolean, ajv: Ajv, setValidationResul
 					setGeoJsonDataWrap({type: "FeatureCollection", features: [geoJsonData]}); // Wrap in FeatureCollection
 				} else {
 					// Format validation errors
-					const errors = validateProject.errors || [];
-						console.log(errors);
-
-							// Check if there are any coordinate-related errors
-							const hasCoordinateErrors = errors.some(error =>
-								(error.instancePath && (
-									error.instancePath.startsWith("/geometry/coordinates") ||
-									error.instancePath === "/geometry/type" ||
-									(error.instancePath === "/geometry" &&
-									(error.message?.includes("required property") ||
-									error.message?.includes("must match exactly one schema") ||
-									error.message?.includes("must be null")))
-								))
-							);
-
-							const formattedErrors = [];
-
-							// If coordinate errors exist, add a single clear message
-							if (hasCoordinateErrors) {
-								formattedErrors.push(`Error: Invalid or missing coordinates (latitude/longitude values). The project location is not printed on the map.`);
-							}
-
-							// Add all non-coordinate related errors
-							errors.forEach(error => {
-								// Skip coordinate-related errors
-								if (error.instancePath && (
-									error.instancePath.startsWith("/geometry/coordinates") ||
-									error.instancePath === "/geometry/type" ||
-									(error.instancePath === "/geometry" &&
-									(error.message?.includes("required property") ||
-									error.message?.includes("must match exactly one schema") ||
-									error.message?.includes("must be null")))
-								)) {
-									return; // Skip this error
-								}
-
-								// Format and add other errors
+					const formattedErrors = (validateProject.errors || []).map((error) => {
+						console.log(error);
 						const path = error.instancePath ? ` at "${error.instancePath}"` : "";
 						const message = error.message ? `: ${error.message}` : "";
-						formattedErrors.push(`Error${path}${message}`);
+						return `Error${path}${message}`;
 					});
 					setValidationResult(`GeoJSON Feature Validation Errors:\n${formattedErrors.join("\n")}`);
 				}
