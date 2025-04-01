@@ -234,19 +234,57 @@ export default function FileValidator(): React.ReactElement {
 			setValidationResult(e.message)
 		}
 
-
 	};
 
 	// formatieren der Fehler für Excel und CSV, ähnlich zu Geojson hier wird noch Zeilennummer mit angegeben
 	const formatAjvErrorsCSVExcel = (errors: ErrorObject[], rowNumber: number) => {
 
 		//console.log(errors)
-		//REFACTOR: slice weil der letzte Fehler in den Tests immer die Else Reference Fehler Ausgabe des Master Schema ist
-		return errors.map((error: ErrorObject) => {
+		if (!errors) {
+			return [];
+		}
+
+		// Check if there are any coordinate-related errors
+		const hasCoordinateErrors = errors.some(error =>
+			(error.instancePath && (
+				error.instancePath.startsWith("/geometry/coordinates") ||
+				error.instancePath === "/geometry/type" ||
+				(error.instancePath === "/geometry" &&
+				 (error.message?.includes("required property") ||
+				  error.message?.includes("must match exactly one schema") ||
+				  error.message?.includes("must be null")))
+			))
+		);
+
+		// Initialize the result array
+		const resultErrors = [];
+
+		// If coordinate errors exist, add a single clear message
+		if (hasCoordinateErrors) {
+			resultErrors.push(`Row ${rowNumber}: Invalid or missing coordinates (latitude/longitude values). The project location is not printed on the map.`);
+		}
+
+		// Add all non-coordinate related errors
+		errors.forEach(error => {
+			// Skip coordinate-related errors since we've already added a consolidated message for them
+			if (error.instancePath && (
+				error.instancePath.startsWith("/geometry/coordinates") ||
+				error.instancePath === "/geometry/type" ||
+				(error.instancePath === "/geometry" &&
+				 (error.message?.includes("required property") ||
+				  error.message?.includes("must match exactly one schema") ||
+				  error.message?.includes("must be null")))
+			)) {
+				return; // Skip this error
+			}
+
+			// Format and add other errors
 			const path = error.instancePath ? ` at "${error.instancePath}"` : "";
 			const message = error.message ? `: ${error.message}` : "";
-			return `Row ${rowNumber}${path}${message}`;
+			resultErrors.push(`Row ${rowNumber}${path}${message}`);
 		});
+
+		return resultErrors;
 	};
 
 	const downloadProcessed = () => {
@@ -287,7 +325,7 @@ export default function FileValidator(): React.ReactElement {
 			<header>
 				<h1>OGM Validator</h1>
 				<p>
-					OGM Validator is an open-source tool designed to validate input data against the specifications of KfWs <a href="https://openkfw.github.io/open-geodata-model/" target="_blank" style={{ color: "#007bff", textDecoration: "none" }}>Open Project Location Model</a>.
+					Open Geodata Model Validator is an open-source tool designed to validate input data against the specifications of KfWs <a href="https://openkfw.github.io/open-geodata-model/" target="_blank" style={{ color: "#007bff", textDecoration: "none" }}>Open Project Location Model</a>.
 					The validator accepts both Excel and GeoJSON files as input data. It identifies errors that need to be addressed before further processing, such as missing values in mandatory fields or incorrect formats for specific entries (e.g., dates not provided in the correct format).
 					Errors should be corrected in the original file using Excel or GIS software, after which the files can be re-evaluated using this tool. Additionally, you can utilize the map feature within the tool to assess the geographic accuracy of the submitted project locations.
 					If you have any questions, please feel free to reach out by creating an issue in our  <a href="https://github.com/openkfw/open-geodata-model" target="_blank" style={{ color: "#007bff", textDecoration: "none" }}>GitHub repository</a>.
@@ -344,6 +382,7 @@ export default function FileValidator(): React.ReactElement {
 				<li><p><a href={"/ogm-validator/Project_Location_Data_Template_V02.xlsx"}>working example</a></p></li>
 				<li><p><a href={"/ogm-validator/sheet_not_found.xlsx"}>no fill-me sheet</a></p></li>
 				<li><p><a href={"/ogm-validator/invalid_data.xlsx"}>invalid_data</a></p></li>
+				<li><p><a href={"/ogm-validator/missing_lat_lon.xlsx"}>missing_lat_lon</a></p></li>
 			</ul>
 
 		</div>
