@@ -136,6 +136,7 @@ export default function FileValidator(): React.ReactElement {
 		setFileInputKey(0);
 		setContinueWithExcelErrors(false)
 		setOpenNoSheetDialog(false)
+		setIsValid(false)
 
 	};
 
