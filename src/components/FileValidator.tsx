@@ -11,6 +11,7 @@ import MapComponent from "./MapComponent";
 import {transformCsvToLocation, transformExcelToLocation} from "../services/util/FileConversionMethods";
 import {saveAs} from 'file-saver';
 import {Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle} from "@mui/material";
+import SendMailButton from "./SendMailButton.tsx";
 
 function getDataBySheetName(workbook: WorkBook, sheetName: string) {
 	const excelData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName], {range: 2});
@@ -117,7 +118,7 @@ export default function FileValidator(): React.ReactElement {
 	const [ areFormatsLoaded, setAreFormatsLoaded] = useState(false)
 	const [ connErros, setConnErros] = useState("Loading...")
 	const [ continueWithExcelErrors, setContinueWithExcelErrors] = useState(false)
-
+	const [ isValid, setIsValid] = useState<boolean>(false);
 	const [openNoSheetDialog, setOpenNoSheetDialog] = React.useState(false);
 
 	const branch = "2025-02-10-devdocs"
@@ -226,9 +227,11 @@ export default function FileValidator(): React.ReactElement {
 			console.log(allErrors)
 			if (allErrors.length == 0) {
 				setValidationResult("Excel/CSV data is valid!");
+				setIsValid(true)
 
 			} else {
 				setValidationResult(`Validation Errors:\n${allErrors.join("\n")}`);
+				setIsValid(false)
 			}
 		} catch (e) {
 			setValidationResult(e.message)
@@ -336,6 +339,7 @@ export default function FileValidator(): React.ReactElement {
 					accept=".json,.csv,.xlsx"
 					onChange={handleFileUpload}
 				/>
+				<SendMailButton isEnabled={isValid} />
 			</header>
 
 
