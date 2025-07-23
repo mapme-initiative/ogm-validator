@@ -26,7 +26,7 @@
     "styled-components": "^6.1.19"
   },
   "devDependencies": {
-    "@types/leaflet": "^1.9.14",
+    "@types/leaflet": "^1.9.20",
     "@types/leaflet.fullscreen": "^3.0.2",
     "@types/node": "^18",
     "@types/papaparse": "^5.3.16",
