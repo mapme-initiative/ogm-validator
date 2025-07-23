@@ -335,13 +335,10 @@ export default function FileValidator(): React.ReactElement {
 			{/* ____________________ Header / Description ____________________ */}
 
 			<header>
-				<h1>OGM Validator</h1>
+				<h1>Location Validator</h1>
 				<p>
-					Open Geodata Model Validator is an open-source tool designed to validate input data against the specifications of KfWs <a href="https://openkfw.github.io/open-geodata-model/" target="_blank" style={{ color: "#007bff", textDecoration: "none" }}>Open Project Location Model</a>.
-					The validator accepts both Excel and GeoJSON files as input data. It identifies errors that need to be addressed before further processing, such as missing values in mandatory fields or incorrect formats for specific entries (e.g., dates not provided in the correct format).
-					Errors should be corrected in the original file using Excel or GIS software, after which the files can be re-evaluated using this tool. Additionally, you can utilize the map feature within the tool to assess the geographic accuracy of the submitted project locations.
-					If you have any questions, please feel free to reach out by creating an issue in our  <a href="https://github.com/openkfw/open-geodata-model" target="_blank" style={{ color: "#007bff", textDecoration: "none" }}>GitHub repository</a>.
-				</p>
+					The Location Validator is an open-source tool designed to validate project location data against the specifications of KfWs Open Project Location Model. The validator accepts both Excel and GeoJSON files as input data. It identifies errors that need to be addressed, such as missing values in mandatory fields or incorrect formats for specific entries (e.g., dates not provided in the correct format). Errors should be corrected in the original file using Excel or GIS software, after which the files can be re-evaluated using this tool. Additionally, you can utilize the map feature within the tool to assess the geographic accuracy of the submitted project locations.
+					Once all locations are valid, the "SEND EMAIL" button will appear green. You can than send an email with the validated data to your project counterpart. Important: Make sure to attach the latest validated (and valid) version to the email.				</p>
 				<input
 					key={fileInputKey}
 					type="file"
