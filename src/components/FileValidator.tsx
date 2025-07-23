@@ -118,8 +118,9 @@ export default function FileValidator(): React.ReactElement {
 	const [ areFormatsLoaded, setAreFormatsLoaded] = useState(false)
 	const [ connErros, setConnErros] = useState("Loading...")
 	const [ continueWithExcelErrors, setContinueWithExcelErrors] = useState(false)
-	const [ isValid, setIsValid] = useState<boolean>(false);
+	const [ enableEMailButton, setEnableEMailButton] = useState<boolean>(false);
 	const [openNoSheetDialog, setOpenNoSheetDialog] = React.useState(false);
+	const [inProNumbers, setInProNumbers] = useState<Set<string> | null>(null);
 
 	const branch = "2025-02-10-devdocs"
 	const schema_json_urls = [
@@ -136,7 +137,7 @@ export default function FileValidator(): React.ReactElement {
 		setFileInputKey(0);
 		setContinueWithExcelErrors(false)
 		setOpenNoSheetDialog(false)
-		setIsValid(false)
+		setEnableEMailButton(false)
 
 	};
 
@@ -225,14 +226,21 @@ export default function FileValidator(): React.ReactElement {
 					// Format the errors for this row
 				})
 				.filter(e => e !== undefined)
-			console.log(allErrors)
-			if (allErrors.length == 0) {
+			console.log("validateParsedData().allErrors", allErrors)
+			if (allErrors.length == 0) { // Wenn keine Fehler gefunden wurden & alle datenreihen eine inproNumber haben, dann aktiviere den Mail-Button
 				setValidationResult("Excel/CSV data is valid!");
-				setIsValid(true)
-
+				console.log("validateParsedData().data:", data)
+				const localInproNumbers = data.map((f) => f.properties.kfwProjectNoINPRO.replaceAll(" ", ""))
+				console.log("validateParsedData().localInproNumbers:", localInproNumbers)
+				if(localInproNumbers.filter((n: any) => n === undefined && n === null).length > 0) { // this here should never happened, it just represent the worst case of data cause we've finished our validation-process!
+					setValidationResult("Something terrible happend, we've inpro-nos which are null or undefined and they passed our validation. Please check your data again and send this crazy dataset to the it-support (us), please.")
+					return ;
+				}
+				setEnableEMailButton(true)
+				setInProNumbers(new Set(localInproNumbers))
 			} else {
 				setValidationResult(`Validation Errors:\n${allErrors.join("\n")}`);
-				setIsValid(false)
+				setEnableEMailButton(false)
 			}
 		} catch (e) {
 			setValidationResult(e.message)
@@ -340,7 +348,7 @@ export default function FileValidator(): React.ReactElement {
 					accept=".json,.csv,.xlsx"
 					onChange={handleFileUpload}
 				/>
-				<SendMailButton isEnabled={isValid} />
+				<SendMailButton isEnabled={enableEMailButton} {...(inProNumbers ? {inProNumbers: [...inProNumbers] } : {})}/>
 			</header>
 
 
