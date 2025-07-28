@@ -11,6 +11,7 @@ import MapComponent from "./MapComponent";
 import {transformCsvToLocation, transformExcelToLocation} from "../services/util/FileConversionMethods";
 import {saveAs} from 'file-saver';
 import {Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle} from "@mui/material";
+import SendMailButton from "./SendMailButton.tsx";
 
 function getDataBySheetName(workbook: WorkBook, sheetName: string) {
 	const excelData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName], {range: 2});
@@ -117,8 +118,9 @@ export default function FileValidator(): React.ReactElement {
 	const [ areFormatsLoaded, setAreFormatsLoaded] = useState(false)
 	const [ connErros, setConnErros] = useState("Loading...")
 	const [ continueWithExcelErrors, setContinueWithExcelErrors] = useState(false)
-
+	const [ enableEMailButton, setEnableEMailButton] = useState<boolean>(false);
 	const [openNoSheetDialog, setOpenNoSheetDialog] = React.useState(false);
+	const [inProNumbers, setInProNumbers] = useState<Set<string> | null>(null);
 
 	const branch = "2025-02-10-devdocs"
 	const schema_json_urls = [
@@ -135,6 +137,7 @@ export default function FileValidator(): React.ReactElement {
 		setFileInputKey(0);
 		setContinueWithExcelErrors(false)
 		setOpenNoSheetDialog(false)
+		setEnableEMailButton(false)
 
 	};
 
@@ -223,12 +226,21 @@ export default function FileValidator(): React.ReactElement {
 					// Format the errors for this row
 				})
 				.filter(e => e !== undefined)
-			console.log(allErrors)
-			if (allErrors.length == 0) {
+			console.log("validateParsedData().allErrors", allErrors)
+			if (allErrors.length == 0) { // Wenn keine Fehler gefunden wurden & alle datenreihen eine inproNumber haben, dann aktiviere den Mail-Button
 				setValidationResult("Excel/CSV data is valid!");
-
+				console.log("validateParsedData().data:", data)
+				const localInproNumbers = data.map((f) => f.properties.kfwProjectNoINPRO.replaceAll(" ", ""))
+				console.log("validateParsedData().localInproNumbers:", localInproNumbers)
+				if(localInproNumbers.filter((n: any) => n === undefined && n === null).length > 0) { // this here should never happened, it just represent the worst case of data cause we've finished our validation-process!
+					setValidationResult("Something terrible happend, we've inpro-nos which are null or undefined and they passed our validation. Please check your data again and send this crazy dataset to the it-support (us), please.")
+					return ;
+				}
+				setEnableEMailButton(true)
+				setInProNumbers(new Set(localInproNumbers))
 			} else {
 				setValidationResult(`Validation Errors:\n${allErrors.join("\n")}`);
+				setEnableEMailButton(false)
 			}
 		} catch (e) {
 			setValidationResult(e.message)
@@ -323,19 +335,17 @@ export default function FileValidator(): React.ReactElement {
 			{/* ____________________ Header / Description ____________________ */}
 
 			<header>
-				<h1>OGM Validator</h1>
+				<h1>Location Validator</h1>
 				<p>
-					Open Geodata Model Validator is an open-source tool designed to validate input data against the specifications of KfWs <a href="https://openkfw.github.io/open-geodata-model/" target="_blank" style={{ color: "#007bff", textDecoration: "none" }}>Open Project Location Model</a>.
-					The validator accepts both Excel and GeoJSON files as input data. It identifies errors that need to be addressed before further processing, such as missing values in mandatory fields or incorrect formats for specific entries (e.g., dates not provided in the correct format).
-					Errors should be corrected in the original file using Excel or GIS software, after which the files can be re-evaluated using this tool. Additionally, you can utilize the map feature within the tool to assess the geographic accuracy of the submitted project locations.
-					If you have any questions, please feel free to reach out by creating an issue in our  <a href="https://github.com/openkfw/open-geodata-model" target="_blank" style={{ color: "#007bff", textDecoration: "none" }}>GitHub repository</a>.
-				</p>
+					The Location Validator is an open-source tool designed to validate project location data against the specifications of KfWs Open Project Location Model. The validator accepts both Excel and GeoJSON files as input data. It identifies errors that need to be addressed, such as missing values in mandatory fields or incorrect formats for specific entries (e.g., dates not provided in the correct format). Errors should be corrected in the original file using Excel or GIS software, after which the files can be re-evaluated using this tool. Additionally, you can utilize the map feature within the tool to assess the geographic accuracy of the submitted project locations.
+					Once all locations are valid, the "SEND EMAIL" button will appear green. You can than send an email with the validated data to your project counterpart. Important: Make sure to attach the latest validated (and valid) version to the email.				</p>
 				<input
 					key={fileInputKey}
 					type="file"
 					accept=".json,.csv,.xlsx"
 					onChange={handleFileUpload}
 				/>
+				<SendMailButton isEnabled={enableEMailButton} {...(inProNumbers ? {inProNumbers: [...inProNumbers] } : {})}/>
 			</header>
 
 
