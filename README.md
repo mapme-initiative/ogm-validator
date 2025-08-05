@@ -27,10 +27,10 @@ npm -v
 
 1. **Clone the repository**
 
-   ```bash
+```bash
 git clone https://github.com/mapme-initiative/ogm-validator;
 cd ogm-validator;
-   ```
+```
 
 
 
@@ -38,7 +38,7 @@ cd ogm-validator;
 
 2. **Install dependencies**
 
-   ```bash
+```bash
 npm install
 # or using yarn
 yarn install
