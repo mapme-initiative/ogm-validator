@@ -34,8 +34,6 @@ cd ogm-validator;
 
 
 
-````
-
 2. **Install dependencies**
 
 ```bash
