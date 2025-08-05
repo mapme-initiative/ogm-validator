@@ -1,3 +1,4 @@
+/* eslint-disable  @typescript-eslint/no-explicit-any */
 import './scss/FileValidator.scss'
 
 import React, { useState } from "react";
@@ -98,30 +99,33 @@ function handleCSVFiles(data: string | ArrayBuffer | null | undefined, setGeoJso
 
 function handleExcelFiles(
 	data: string | ArrayBuffer | null | undefined,
-	setOpenNoSheetDialog, continueWithExcelErrors: boolean,
-	lastValidationStep: (
-		workbook: WorkBook,
-		setGeoJsonDataWrap: (
-			value: any
-		) => void, validateParsedData: (
-			data: any[]
-		) => (
-				React.JSX.Element | undefined
-			)) => void, setGeoJsonDataWrap: (value: any) => void,
-	validateParsedData: (data: any[]) => (React.JSX.Element | undefined)
+	setOpenNoSheetDialog: (value: boolean) => void,
+	continueWithExcelErrors: boolean,
+	lastValidationStep: (workbook: WorkBook, setGeoJsonDataWrap: (value: any) => void, validateParsedData: (data: any[]) => React.JSX.Element) => void,
+	setGeoJsonDataWrap: (value: any) => void,
+	validateParsedData: (data: any[]) => React.JSX.Element,
+	setValidationResult: (message: string) => void  // Add this parameter
 ) {
-	// Parse Excel TODO: Datumseinträge etc. müssen noch transformiert werden
-	const wb = xlsx.read(data, { type: "binary" })
-	const sheetName = wb.SheetNames[1];
-	console.log(sheetName)
-	var sheetNameArray: Array<string> = ["fill-me", "fill-me Remplissez-moi"];
-	if (!sheetNameArray.includes(sheetName)) {
-		setOpenNoSheetDialog(true)
-		if (!continueWithExcelErrors) {
-			return
+	try {
+		const wb = xlsx.read(data, { type: "binary" })
+		const sheetName = wb.SheetNames[1];
+		const sheetNameArray: Array<string> = ["fill-me", "fill-me Remplissez-moi"];
+
+		if (!sheetNameArray.includes(sheetName)) {
+			setOpenNoSheetDialog(true)
+			if (!continueWithExcelErrors) {
+				return
+			}
+		}
+
+		lastValidationStep(wb, setGeoJsonDataWrap, validateParsedData);
+	} catch (error) {
+		if (error instanceof Error) {
+			setValidationResult(`Error processing Excel file: ${error.message}`);
+		} else {
+			setValidationResult('An unknown error occurred while processing the Excel file');
 		}
 	}
-	lastValidationStep(wb, setGeoJsonDataWrap, validateParsedData);
 }
 
 export default function FileValidator(): React.ReactElement {
@@ -171,29 +175,32 @@ export default function FileValidator(): React.ReactElement {
 	const ajv_fr = new Ajv({ allErrors: true });
 
 	function lastValidationStep(workbook: WorkBook, setGeoJsonDataWrap: (value: any) => void, validateParsedData: (data: any[]) => React.JSX.Element) {
-		if (workbook == null)
-			return
-		const sheetName = workbook.SheetNames[1];
+		if (!workbook) {
+			throw new Error('Workbook is null or undefined');
+		}
 
-		// If `sheetName` is one you expect for other languages, put them in a map:
 		const sheetNameMap = {
 			en: "fill-me",
 			fr: "fill-me Remplissez-moi",
-
-			// …etc
 		};
 
-		const candidate = sheetNameMap[lang] ?? sheetName;
+		if (!(lang in sheetNameMap)) {
+			throw new Error(`Unsupported language: ${lang}. Supported languages are: ${Object.keys(sheetNameMap).join(', ')}`);
+		}
 
-		const sheetToUse = workbook.SheetNames.includes(candidate)
-			? candidate
-			: workbook.SheetNames[0];
+		const expectedSheetName = sheetNameMap[lang];
 
-		const transformedData = getDataBySheetName(workbook, sheetToUse);
-		//setGeojson(transformedData);
-		setGeoJsonDataWrap({ type: "FeatureCollection", features: transformedData })
+		if (!workbook.SheetNames.includes(expectedSheetName)) {
+			throw new Error(
+				`Sheet "${expectedSheetName}" not found for language ${lang}. ` +
+				`Available sheets are: ${workbook.SheetNames.join(', ')}`
+			);
+		}
+
+		const transformedData = getDataBySheetName(workbook, expectedSheetName);
+		setGeoJsonDataWrap({ type: "FeatureCollection", features: transformedData });
 		validateParsedData(transformedData);
-		console.log(transformedData)
+		console.log(transformedData);
 	}
 
 	Promise.all(fetchPromises)
@@ -246,7 +253,15 @@ export default function FileValidator(): React.ReactElement {
 					// Parse CSV
 					handleCSVFiles(data, setGeoJsonDataWrap, validateParsedData);
 				} else {
-					handleExcelFiles(data, setOpenNoSheetDialog, continueWithExcelErrors, lastValidationStep, setGeoJsonDataWrap, validateParsedData);
+					handleExcelFiles(
+						data,
+						setOpenNoSheetDialog,
+						continueWithExcelErrors,
+						lastValidationStep,
+						setGeoJsonDataWrap,
+						validateParsedData,
+						setValidationResult  // Add this parameter
+					);
 				}
 			};
 			reader.readAsBinaryString(file);
@@ -411,7 +426,7 @@ export default function FileValidator(): React.ReactElement {
 						label="Language"
 					>
 						<MenuItem value="en">English</MenuItem>
-						<MenuItem value="fr">Français</MenuItem>
+						<MenuItem value="fr">Francais</MenuItem>
 					</Select>
 				</FormControl>
 				<input
@@ -463,8 +478,9 @@ export default function FileValidator(): React.ReactElement {
 			{/* ____________________ Example ____________________ */}
 
 			<h4>Example Files:</h4>
-			<ul>
-				<li><p><a href={"/ogm-validator/Project_Location_Data_Template_V02.xlsx"}>working example</a></p></li>
+			<ul className="example-files">
+				<li><p><a href={"/ogm-validator/Project_Location_Data_Template_EN_V03.xlsx"}>working example</a></p></li>
+				<li><p><a href={"/ogm-validator/Project_Location_Data_Template_FR_V03.xlsx"}>french example</a></p></li>
 				<li><p><a href={"/ogm-validator/sheet_not_found.xlsx"}>no fill-me sheet</a></p></li>
 				<li><p><a href={"/ogm-validator/invalid_data.xlsx"}>invalid_data</a></p></li>
 				<li><p><a href={"/ogm-validator/missing_lat_lon.xlsx"}>missing_lat_lon</a></p></li>
