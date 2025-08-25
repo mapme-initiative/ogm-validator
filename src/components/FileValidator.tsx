@@ -1,20 +1,21 @@
+/* eslint-disable  @typescript-eslint/no-explicit-any */
 import './scss/FileValidator.scss'
 
-import React, {useState} from "react";
-import Ajv, {ErrorObject} from "ajv";
+import React, { useState } from "react";
+import Ajv, { ErrorObject } from "ajv";
 import addFormats from "ajv-formats";
 import Papa from "papaparse";
 import * as xlsx from "xlsx";
-import {WorkBook} from "xlsx";
+import { WorkBook } from "xlsx";
 import MapComponent from "./MapComponent";
 
-import {transformCsvToLocation, transformExcelToLocation} from "../services/util/FileConversionMethods";
-import {saveAs} from 'file-saver';
-import {Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle} from "@mui/material";
+import { transformCsvToLocation, transformExcelToLocation } from "../services/util/FileConversionMethods";
+import { saveAs } from 'file-saver';
+import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
 import SendMailButton from "./SendMailButton.tsx";
 
 function getDataBySheetName(workbook: WorkBook, sheetName: string) {
-	const excelData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName], {range: 2});
+	const excelData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName], { range: 2 });
 	return transformExcelToLocation(excelData);
 }
 
@@ -24,8 +25,9 @@ function handleJsonFiles(areFormatsLoaded: boolean, ajv: Ajv, setValidationResul
 		try {
 			//init validateProjects
 			if (!areFormatsLoaded)
-				return <p style={{color: 'white'}}>Schemas couldn't loaded. Check your internet connection and please
+				return <p style={{ color: 'white' }}>Schemas couldn't loaded. Check your internet connection and please
 					refresh this page</p>
+
 			const validateProject = ajv.getSchema("feature_project_schema.json")
 
 			// Parse the uploaded GeoJSON
@@ -38,7 +40,7 @@ function handleJsonFiles(areFormatsLoaded: boolean, ajv: Ajv, setValidationResul
 
 				if (isValid) {
 					setValidationResult("GeoJSON Feature is valid!");
-					setGeoJsonDataWrap({type: "FeatureCollection", features: [geoJsonData]}); // Wrap in FeatureCollection
+					setGeoJsonDataWrap({ type: "FeatureCollection", features: [geoJsonData] }); // Wrap in FeatureCollection
 				} else {
 					// Format validation errors
 					const formattedErrors = (validateProject.errors || []).map((error) => {
@@ -88,46 +90,71 @@ function handleJsonFiles(areFormatsLoaded: boolean, ajv: Ajv, setValidationResul
 }
 
 function handleCSVFiles(data: string | ArrayBuffer | null | undefined, setGeoJsonDataWrap: (value: any) => void, validateParsedData: (data: any[]) => (React.JSX.Element | undefined)) {
-	const parsedData = Papa.parse(data as string, {header: true}).data;
+	const parsedData = Papa.parse(data as string, { header: true }).data;
 	const transformedData = transformCsvToLocation(parsedData);
 	//setGeojson(transformedData);
-	setGeoJsonDataWrap({type: "FeatureCollection", features: transformedData})
+	setGeoJsonDataWrap({ type: "FeatureCollection", features: transformedData })
 	validateParsedData(transformedData);
 }
 
-function handleExcelFiles(data: string | ArrayBuffer | null | undefined, setOpenNoSheetDialog, continueWithExcelErrors: boolean, lastValidationStep: (workbook: WorkBook, setGeoJsonDataWrap: (value: any) => void, validateParsedData: (data: any[]) => (React.JSX.Element | undefined)) => void, setGeoJsonDataWrap: (value: any) => void, validateParsedData: (data: any[]) => (React.JSX.Element | undefined)) {
-	// Parse Excel TODO: Datumseinträge etc. müssen noch transformiert werden
-	const wb = xlsx.read(data, {type: "binary"})
-	const sheetName = wb.SheetNames[1];
-	if (sheetName !== "fill-me") {
-		setOpenNoSheetDialog(true)
-		if (!continueWithExcelErrors) {
-			return
+function handleExcelFiles(
+	data: string | ArrayBuffer | null | undefined,
+	setOpenNoSheetDialog: (value: boolean) => void,
+	continueWithExcelErrors: boolean,
+	lastValidationStep: (workbook: WorkBook, setGeoJsonDataWrap: (value: any) => void, validateParsedData: (data: any[]) => React.JSX.Element) => void,
+	setGeoJsonDataWrap: (value: any) => void,
+	validateParsedData: (data: any[]) => React.JSX.Element,
+	setValidationResult: (message: string) => void  // Add this parameter
+) {
+	try {
+		const wb = xlsx.read(data, { type: "binary" })
+		const sheetName = wb.SheetNames[1];
+		const sheetNameArray: Array<string> = ["fill-me", "fill-me Remplissez-moi"];
+
+		if (!sheetNameArray.includes(sheetName)) {
+			setOpenNoSheetDialog(true)
+			if (!continueWithExcelErrors) {
+				return
+			}
+		}
+
+		lastValidationStep(wb, setGeoJsonDataWrap, validateParsedData);
+	} catch (error) {
+		if (error instanceof Error) {
+			setValidationResult(`Error processing Excel file: ${error.message}`);
+		} else {
+			setValidationResult('An unknown error occurred while processing the Excel file');
 		}
 	}
-	lastValidationStep(wb, setGeoJsonDataWrap, validateParsedData);
 }
 
 export default function FileValidator(): React.ReactElement {
-
-	const [ validationResult, setValidationResult ] = useState<string | null>(null);
+	const [lang, setLang] = useState<'en' | 'fr'>('en');
+	const [validationResult, setValidationResult] = useState<string | null>(null);
 	//const [ geojson, setGeojson ] = useState<any>(null);
-	const [ geoJsonDataWrap, setGeoJsonDataWrap ] = useState<any>(null);
-	const [ fileInputKey, setFileInputKey ] = useState<number>(0);
-	const [ isPending, setIsPending] = useState(true)
-	const [ areFormatsLoaded, setAreFormatsLoaded] = useState(false)
-	const [ connErros, setConnErros] = useState("Loading...")
-	const [ continueWithExcelErrors, setContinueWithExcelErrors] = useState(false)
-	const [ enableEMailButton, setEnableEMailButton] = useState<boolean>(false);
+	const [geoJsonDataWrap, setGeoJsonDataWrap] = useState<any>(null);
+	const [fileInputKey, setFileInputKey] = useState<number>(0);
+	const [isPending, setIsPending] = useState(true)
+	const [areFormatsLoaded, setAreFormatsLoaded] = useState(false)
+	const [connErros, setConnErros] = useState("Loading...")
+	const [continueWithExcelErrors, setContinueWithExcelErrors] = useState(false)
+	const [enableEMailButton, setEnableEMailButton] = useState<boolean>(false);
 	const [openNoSheetDialog, setOpenNoSheetDialog] = React.useState(false);
 	const [inProNumbers, setInProNumbers] = useState<Set<string> | null>(null);
 
-	const branch = "2025-02-10-devdocs"
-	const schema_json_urls = [
-		`https://raw.githubusercontent.com/openkfw/open-geodata-model/${branch}/references/sector_location_schema.json`,
+	const branch = "250729-french-schema"
+	const schema_json_urls_en = [
+		`https://raw.githubusercontent.com/openkfw/open-geodata-model/${branch}/references/sector_location_schema_en.json`,
 		`https://raw.githubusercontent.com/openkfw/open-geodata-model/${branch}/references/dac5_schema.json`,
 		`https://raw.githubusercontent.com/openkfw/open-geodata-model/${branch}/references/feature_project_schema.json`,
-		`https://raw.githubusercontent.com/openkfw/open-geodata-model/${branch}/references/project_core_schema.json`
+		`https://raw.githubusercontent.com/openkfw/open-geodata-model/${branch}/references/project_core_schema_en.json`
+	];
+
+	const schema_json_urls_fr = [
+		`https://raw.githubusercontent.com/openkfw/open-geodata-model/${branch}/references/sector_location_schema_fr.json`,
+		`https://raw.githubusercontent.com/openkfw/open-geodata-model/${branch}/references/dac5_schema.json`,
+		`https://raw.githubusercontent.com/openkfw/open-geodata-model/${branch}/references/feature_project_schema.json`,
+		`https://raw.githubusercontent.com/openkfw/open-geodata-model/${branch}/references/project_core_schema_fr.json`
 	];
 	const resetMap = () => {
 
@@ -142,19 +169,38 @@ export default function FileValidator(): React.ReactElement {
 	};
 
 
-	const fetchPromises = schema_json_urls.map(url => fetch(url).then(r => r.json()))
-	const ajv = new Ajv({ allErrors:true });
-
+	const fetchPromises = schema_json_urls_en.map(url => fetch(url).then(r => r.json()))
+	const fetchPromises_fr = schema_json_urls_fr.map(url => fetch(url).then(r => r.json()))
+	const ajv = new Ajv({ allErrors: true });
+	const ajv_fr = new Ajv({ allErrors: true });
 
 	function lastValidationStep(workbook: WorkBook, setGeoJsonDataWrap: (value: any) => void, validateParsedData: (data: any[]) => React.JSX.Element) {
-		if(workbook == null)
-			return
-		const sheetName = workbook.SheetNames[1];
-		const transformedData = getDataBySheetName(workbook, sheetName === "fill-me" ? "fill-me" : workbook.SheetNames[0]);
-		//setGeojson(transformedData);
-		setGeoJsonDataWrap({type: "FeatureCollection", features: transformedData})
+		if (!workbook) {
+			throw new Error('Workbook is null or undefined');
+		}
+
+		const sheetNameMap = {
+			en: "fill-me",
+			fr: "fill-me Remplissez-moi",
+		};
+
+		if (!(lang in sheetNameMap)) {
+			throw new Error(`Unsupported language: ${lang}. Supported languages are: ${Object.keys(sheetNameMap).join(', ')}`);
+		}
+
+		const expectedSheetName = sheetNameMap[lang];
+
+		if (!workbook.SheetNames.includes(expectedSheetName)) {
+			throw new Error(
+				`Sheet "${expectedSheetName}" not found for language ${lang}. ` +
+				`Available sheets are: ${workbook.SheetNames.join(', ')}`
+			);
+		}
+
+		const transformedData = getDataBySheetName(workbook, expectedSheetName);
+		setGeoJsonDataWrap({ type: "FeatureCollection", features: transformedData });
 		validateParsedData(transformedData);
-		console.log(transformedData)
+		console.log(transformedData);
 	}
 
 	Promise.all(fetchPromises)
@@ -164,6 +210,20 @@ export default function FileValidator(): React.ReactElement {
 		})
 		.then(ajv => {
 			addFormats(ajv)
+			setIsPending(false)
+			setAreFormatsLoaded(true)
+		})
+		.catch(e => {
+			setConnErros(e.message)
+		})
+
+	Promise.all(fetchPromises_fr)
+		.then(results => {
+			results.map(r => ajv_fr.addSchema(r))
+			return ajv_fr
+		})
+		.then(ajv_fr => {
+			addFormats(ajv_fr)
 			setIsPending(false)
 			setAreFormatsLoaded(true)
 		})
@@ -193,7 +253,15 @@ export default function FileValidator(): React.ReactElement {
 					// Parse CSV
 					handleCSVFiles(data, setGeoJsonDataWrap, validateParsedData);
 				} else {
-					handleExcelFiles(data, setOpenNoSheetDialog, continueWithExcelErrors, lastValidationStep, setGeoJsonDataWrap, validateParsedData);
+					handleExcelFiles(
+						data,
+						setOpenNoSheetDialog,
+						continueWithExcelErrors,
+						lastValidationStep,
+						setGeoJsonDataWrap,
+						validateParsedData,
+						setValidationResult  // Add this parameter
+					);
 				}
 			};
 			reader.readAsBinaryString(file);
@@ -206,9 +274,19 @@ export default function FileValidator(): React.ReactElement {
 	const validateParsedData = (data: any[]) => {
 
 		//init validateProjects
-		if(!areFormatsLoaded)
-			return <p style={{color: 'white'}}>Schemas couldn't loaded. Check your internet connection and please refresh this page</p>
-		const validateProject = ajv.getSchema("feature_project_schema.json")
+		if (!areFormatsLoaded)
+			return <p style={{ color: 'white' }}>Schemas couldn't loaded. Check your internet connection and please refresh this page</p>
+
+		// declare once, in the outer scope
+		let validateProject;
+
+		if (lang === "en") {
+			validateProject = ajv.getSchema("feature_project_schema.json");
+		} else if (lang === "fr") {
+			validateProject = ajv_fr.getSchema("feature_project_schema.json");
+		} else {
+			throw new Error(`Unsupported language: ${lang}`);
+		}
 
 		// Validate each row in the CSV/Excel data, flatMap sonst ist allErrors Object nicht 0 von der Länge bei keinen fehlern
 		try {
@@ -219,7 +297,7 @@ export default function FileValidator(): React.ReactElement {
 			const allErrors = data
 				.flatMap((row, index) => {
 					validateProject(row);
-					if(validateProject.errors != null)
+					if (validateProject.errors != null)
 						return formatAjvErrorsCSVExcel(validateProject.errors, index + 1);
 					else
 						return
@@ -232,9 +310,9 @@ export default function FileValidator(): React.ReactElement {
 				console.log("validateParsedData().data:", data)
 				const localInproNumbers = data.map((f) => f.properties.kfwProjectNoINPRO.replaceAll(" ", ""))
 				console.log("validateParsedData().localInproNumbers:", localInproNumbers)
-				if(localInproNumbers.filter((n: any) => n === undefined && n === null).length > 0) { // this here should never happened, it just represent the worst case of data cause we've finished our validation-process!
+				if (localInproNumbers.filter((n: any) => n === undefined && n === null).length > 0) { // this here should never happened, it just represent the worst case of data cause we've finished our validation-process!
 					setValidationResult("Something terrible happend, we've inpro-nos which are null or undefined and they passed our validation. Please check your data again and send this crazy dataset to the it-support (us), please.")
-					return ;
+					return;
 				}
 				setEnableEMailButton(true)
 				setInProNumbers(new Set(localInproNumbers))
@@ -258,14 +336,14 @@ export default function FileValidator(): React.ReactElement {
 
 		// Check if there are any coordinate-related errors
 		const hasCoordinateErrors = errors.some(error =>
-			(error.instancePath && (
-				error.instancePath.startsWith("/geometry/coordinates") ||
-				error.instancePath === "/geometry/type" ||
-				(error.instancePath === "/geometry" &&
-				 (error.message?.includes("required property") ||
-				  error.message?.includes("must match exactly one schema") ||
-				  error.message?.includes("must be null")))
-			))
+		(error.instancePath && (
+			error.instancePath.startsWith("/geometry/coordinates") ||
+			error.instancePath === "/geometry/type" ||
+			(error.instancePath === "/geometry" &&
+				(error.message?.includes("required property") ||
+					error.message?.includes("must match exactly one schema") ||
+					error.message?.includes("must be null")))
+		))
 		);
 
 		// Initialize the result array
@@ -283,9 +361,9 @@ export default function FileValidator(): React.ReactElement {
 				error.instancePath.startsWith("/geometry/coordinates") ||
 				error.instancePath === "/geometry/type" ||
 				(error.instancePath === "/geometry" &&
-				 (error.message?.includes("required property") ||
-				  error.message?.includes("must match exactly one schema") ||
-				  error.message?.includes("must be null")))
+					(error.message?.includes("required property") ||
+						error.message?.includes("must match exactly one schema") ||
+						error.message?.includes("must be null")))
 			)) {
 				return; // Skip this error
 			}
@@ -306,8 +384,8 @@ export default function FileValidator(): React.ReactElement {
 
 	};
 
-	if(isPending)
-		return <p style={{color: 'white'}}>{connErros}</p>
+	if (isPending)
+		return <p style={{ color: 'white' }}>{connErros}</p>
 	return <>
 		<div className='file_validator'>
 
@@ -339,13 +417,25 @@ export default function FileValidator(): React.ReactElement {
 				<p>
 					The Location Validator is an open-source tool designed to validate project location data against the specifications of KfWs Open Project Location Model. The validator accepts both Excel and GeoJSON files as input data. It identifies errors that need to be addressed, such as missing values in mandatory fields or incorrect formats for specific entries (e.g., dates not provided in the correct format). Errors should be corrected in the original file using Excel or GIS software, after which the files can be re-evaluated using this tool. Additionally, you can utilize the map feature within the tool to assess the geographic accuracy of the submitted project locations.
 					Once all locations are valid, the "SEND EMAIL" button will appear green. You can than send an email with the validated data to your project counterpart. Important: Make sure to attach the latest validated (and valid) version to the email.				</p>
+				<FormControl variant="outlined" size="small">
+					<InputLabel id="lang-select-label">Language</InputLabel>
+					<Select
+						labelId="lang-select-label"
+						value={lang}
+						onChange={e => setLang(e.target.value as 'en' | 'fr')}
+						label="Language"
+					>
+						<MenuItem value="en">English</MenuItem>
+						<MenuItem value="fr">Francais</MenuItem>
+					</Select>
+				</FormControl>
 				<input
 					key={fileInputKey}
 					type="file"
 					accept=".json,.csv,.xlsx"
 					onChange={handleFileUpload}
 				/>
-				<SendMailButton isEnabled={enableEMailButton} {...(inProNumbers ? {inProNumbers: [...inProNumbers] } : {})}/>
+				<SendMailButton isEnabled={enableEMailButton} {...(inProNumbers ? { inProNumbers: [...inProNumbers] } : {})} />
 			</header>
 
 
@@ -388,8 +478,9 @@ export default function FileValidator(): React.ReactElement {
 			{/* ____________________ Example ____________________ */}
 
 			<h4>Example Files:</h4>
-			<ul>
-				<li><p><a href={"/ogm-validator/Project_Location_Data_Template_V02.xlsx"}>working example</a></p></li>
+			<ul className="example-files">
+				<li><p><a href={"/ogm-validator/Project_Location_Data_Template_EN_V03.xlsx"}>working example</a></p></li>
+				<li><p><a href={"/ogm-validator/Project_Location_Data_Template_FR_V03.xlsx"}>french example</a></p></li>
 				<li><p><a href={"/ogm-validator/sheet_not_found.xlsx"}>no fill-me sheet</a></p></li>
 				<li><p><a href={"/ogm-validator/invalid_data.xlsx"}>invalid_data</a></p></li>
 				<li><p><a href={"/ogm-validator/missing_lat_lon.xlsx"}>missing_lat_lon</a></p></li>

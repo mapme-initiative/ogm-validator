@@ -1,3 +1,4 @@
+/* eslint-disable  @typescript-eslint/no-explicit-any */
 import React from "react";
 import { MapContainer, TileLayer, GeoJSON, LayersControl, useMap, ZoomControl } from "react-leaflet";
 import L from "leaflet";
@@ -13,7 +14,7 @@ interface GeoJSONFeature {
     type: "Point" | "Polygon" | "LineString";
     coordinates: number[] | number[][] | number[][][];
   };
-  properties: {};
+  properties: NonNullable<unknown>;
 }
 interface GeoJSONCollection {
   type: "FeatureCollection";
@@ -74,9 +75,9 @@ const MapComponent: React.FC<MapComponentProps> = ({ geoJsonData }) => {
   const onEachFeature = (feature: any, layer: L.Layer) => {
     if (feature.properties) {
       const props = feature.properties;
-      const timeLapseLink = feature.timelapse_link ? 
+      const timeLapseLink = feature.timelapse_link ?
         `<a href="${feature.timelapse_link}" target="_blank">Timelapse Link</a>` : "";
-      
+
       // Create a formatted HTML string with all the requested fields in the exact order from the table
       const popupContent = `
         <div class="map-popup">
@@ -104,7 +105,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ geoJsonData }) => {
           </div>
         </div>
       `;
-      
+
       layer.bindPopup(popupContent);
     }
   };
@@ -118,7 +119,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ geoJsonData }) => {
     >
       {/* Add Zoom Control (Top Left) */}
       <ZoomControl position="topleft" />
-      
+
       {/* Add Fullscreen Control */}
       <FullscreenControl />
 

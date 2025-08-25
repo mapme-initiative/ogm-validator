@@ -1,3 +1,4 @@
+/* eslint-disable  @typescript-eslint/no-explicit-any */
 export const excelDateToString = (excelDate: number): string => {
     try {
         // Excel dates are serialized as days from January 1, 1900, but Excel considers 1900 a leap year
@@ -25,7 +26,7 @@ export const safeParseInt = (unsafeFloatString: string): number => {
 // Transform CSV/Excel data to use location with nested latitude and longitude
 export const transformCsvToLocation = (data: any[]) => {
     return data.map(row => {
-        const { latitude, longitude, budgetShare, dac5PurposeCode, sector, location_type, plannedOrActualEndDate, plannedOrActualStartDate, dateOfDataCollection, ...rest } = row;
+        const { latitude, longitude, budgetShare, dac5PurposeCode, sector, location_type, ...rest } = row;
 
         return {
             type: "Feature",
